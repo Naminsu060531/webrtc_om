@@ -7,6 +7,7 @@ export default {
 
             streamVideo: null,
             streamVoice: null,
+            streamMedia: null,
 
             isCameraOpen: false,
 
@@ -126,6 +127,7 @@ export default {
 
         joinRoom() {
             console.log('룸에 참여 중...');
+            this.startGetStream();
             this.connectWebSocket();
             this.$refs.meetingRoom.style.display = 'flex';
         },
@@ -145,8 +147,10 @@ export default {
             this.showChatRoom();
             this.sendMessage({ cameraOff: true, voiceOff: true });
             this.$refs.otherCam.style.display = 'none';
+
             if (this.streamVideo) { this.startCamera(); }
             if (this.streamVoice) { this.startCamera(); }
+
             this.$refs.meetingRoom.style.display = 'none';
             this.$refs.userCam.classList.remove('setMove');
             this.$refs.chatButton.style.display = 'none';
@@ -160,6 +164,13 @@ export default {
             this.$refs.userVideo.play();
             this.$refs.otherVideo.play();
         },
+
+        startGetStream() {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    this.streamMedia = stream; // 전체 스트림을 저장
+            })
+        },        
 
         startCamera() {
             console.log('카메라 시작 또는 종료 시도');
@@ -210,6 +221,7 @@ export default {
                 // 마이크 종료
                 console.log('보이스 종료');
                 this.$refs.voiceButton.style.backgroundColor = 'white';
+                this.$refs.userStatus_voice.style.display = 'none';
 
                 const tracks = this.streamVoice.getTracks();
                 tracks.forEach(track => {
@@ -226,6 +238,7 @@ export default {
                 // 마이크 시작
                 console.log('보이스 시작');
                 this.$refs.voiceButton.style.backgroundColor = 'black';
+                this.$refs.userStatus_voice.style.display = 'flex';
 
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(stream => {
@@ -334,9 +347,11 @@ export default {
                 }
                 else if (message.voiceOn) {
                     console.log("상대방이 마이크를 킵니다.");
+                    this.$refs.otherStatus_voice.style.display = 'flex';
                 }
                 else if (message.voiceOff) {
                     console.log("상대방이 마이크를 끕니다..");
+                    this.$refs.otherStatus_voice.style.display = 'none';
                 }
                 else if (message.cameraOn) {
                     console.log("상대방이 카메라를 킵니다.");
